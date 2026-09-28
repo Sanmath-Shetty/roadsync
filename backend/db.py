@@ -1,8 +1,10 @@
 """Tiny SQLite helper. Geometry is stored as a GeoJSON string."""
 import os
 import sqlite3
+from pathlib import Path
 
-DB_PATH = os.getenv("DB_PATH", "roadsync.db")
+# Always keep the DB next to this file, whatever folder you run from.
+DB_PATH = str(Path(__file__).parent / os.getenv("DB_PATH", "roadsync.db"))
 
 
 def get_conn():

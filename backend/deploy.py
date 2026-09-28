@@ -51,10 +51,17 @@ def deploy(w3, abi, bytecode, account, chain_id):
 
 
 def main():
-    load_dotenv()
-    rpc, chain_id, key = (os.getenv(k) for k in ("MST_RPC_URL", "MST_CHAIN_ID", "DEPLOYER_PRIVATE_KEY"))
+    load_dotenv(Path(__file__).parent / ".env")  # always backend/.env, whatever folder you run from
+    rpc, chain_id, key = (os.getenv(k, "").strip() for k in ("MST_RPC_URL", "MST_CHAIN_ID", "DEPLOYER_PRIVATE_KEY"))
     if not (rpc and chain_id and key):
         raise SystemExit("Fill MST_RPC_URL, MST_CHAIN_ID, DEPLOYER_PRIVATE_KEY in .env first.")
+    if not key.startswith("0x"):
+        key = "0x" + key
+    if len(key) == 42:
+        raise SystemExit("DEPLOYER_PRIVATE_KEY looks like a wallet ADDRESS (42 chars). "
+                         "Paste the PRIVATE KEY (66 chars) instead.")
+    if len(key) != 66:
+        raise SystemExit(f"DEPLOYER_PRIVATE_KEY should be 66 chars (0x + 64), got {len(key)}.")
 
     w3 = Web3(Web3.HTTPProvider(rpc))
     if not w3.is_connected():
