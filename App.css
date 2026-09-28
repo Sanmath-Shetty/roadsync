@@ -1,0 +1,148 @@
+/* src/index.css */
+body {
+  margin: 0;
+}
+/* src/App.css */
+
+/* ---------- Page layout ---------- */
+.app {
+  display: flex;          /* sidebar and map sit side by side */
+  height: 100vh;          /* fill the whole browser window */
+  font-family: system-ui, sans-serif;
+  color: #222;
+}
+
+.sidebar {
+  width: 340px;
+  padding: 16px;
+  overflow-y: auto;       /* scroll if the panels get long */
+  background: #f7f8fa;
+  border-right: 1px solid #ddd;
+  box-sizing: border-box;
+}
+
+.map-wrap {
+  flex: 1;                /* take all remaining width */
+  position: relative;
+}
+
+/* Leaflet needs an explicit height or the map is invisible */
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+/* ---------- Text ---------- */
+.sidebar h1 {
+  margin: 0 0 4px;
+  font-size: 22px;
+}
+
+.subtitle {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: #666;
+}
+
+.sidebar h2 {
+  margin: 0 0 8px;
+  font-size: 15px;
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 8px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  color: white;
+  background: #1e88e5;    /* default: blue */
+}
+
+.btn:hover { opacity: 0.9; }
+
+.btn:disabled {
+  background: #bbb;
+  cursor: not-allowed;
+}
+
+.btn-success { background: #43a047; }   /* green */
+
+/* ---------- Panels and cards ---------- */
+.panel {
+  margin-bottom: 12px;
+  padding: 12px;
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+/* Red Conflict Alert */
+.alert {
+  background: #ffebee;
+  border: 1px solid #e53935;
+  border-left: 6px solid #e53935;
+  color: #b71c1c;
+}
+
+/* Blue coordination card */
+.card {
+  background: #e3f2fd;
+  border: 1px solid #1e88e5;
+  border-left: 6px solid #1e88e5;
+}
+
+/* Green "no conflict / success" message */
+.ok {
+  background: #e8f5e9;
+  border: 1px solid #43a047;
+  border-left: 6px solid #43a047;
+}
+
+/* ---------- Legend (floats on top of the map) ---------- */
+.legend {
+  position: absolute;
+  bottom: 24px;
+  right: 12px;
+  z-index: 1000;          /* above the map tiles */
+  padding: 10px 12px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.3);
+  font-size: 13px;
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+
+.legend-swatch {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* ---------- Timeline ---------- */
+.timeline-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+  font-size: 13px;
+}
+
+.timeline-item:last-child { border-bottom: none; }
+
+.tx-hash {
+  display: block;
+  margin-top: 2px;
+  font-family: monospace;
+  font-size: 11px;
+  color: #666;
+  word-break: break-all;
+}
