@@ -1,8 +1,10 @@
 """Tiny SQLite helper. Geometry is stored as a GeoJSON string."""
 import os
 import sqlite3
+from pathlib import Path
 
-DB_PATH = os.getenv("DB_PATH", "roadsync.db")
+# Always keep the DB next to this file, whatever folder you run from.
+DB_PATH = str(Path(__file__).parent / os.getenv("DB_PATH", "roadsync.db"))
 
 
 def get_conn():
@@ -28,7 +30,22 @@ def init_db():
                 geometry TEXT NOT NULL,      -- GeoJSON LineString, [lng, lat]
                 start    TEXT NOT NULL,      -- ISO date, e.g. 2026-10-05
                 end      TEXT NOT NULL,
-                status   TEXT NOT NULL       -- submitted | approved
+                status   TEXT NOT NULL,      -- submitted | conflict | resolved | approved
+                chain_id INTEGER,            -- id inside the smart contract
+                conflicts TEXT               -- JSON list from the last check
+            );
+            -- Our copy of what we sent on-chain (each row has a real tx hash).
+            CREATE TABLE IF NOT EXISTS events (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                event         TEXT NOT NULL,
+                work_order_id INTEGER NOT NULL,
+                tx_hash       TEXT NOT NULL,
+                timestamp     TEXT NOT NULL
             );
             """
         )
+        # Older DBs (from Task 1) lack the new columns: add them.
+        cols = {r["name"] for r in conn.execute("PRAGMA table_info(work_orders)")}
+        for col in ("chain_id INTEGER", "conflicts TEXT"):
+            if col.split()[0] not in cols:
+                conn.execute(f"ALTER TABLE work_orders ADD COLUMN {col}")

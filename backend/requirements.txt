@@ -4,3 +4,4 @@ shapely>=2.0
 pyproj>=3.6
 web3>=6.0
 python-dotenv>=1.0
+py-solc-x>=2.0

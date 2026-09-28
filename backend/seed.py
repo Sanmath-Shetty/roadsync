@@ -81,6 +81,8 @@ def seed():
         # Wipe first so running the script twice doesn't duplicate rows.
         conn.execute("DELETE FROM assets")
         conn.execute("DELETE FROM work_orders")
+        conn.execute("DELETE FROM events")
+        conn.execute("DELETE FROM sqlite_sequence")  # restart ids at 1
 
         for a in ASSETS:
             geometry = {"type": "LineString", "coordinates": a["coords"]}
