@@ -20,7 +20,7 @@ export default function Ledger({ events, freshCount }) {
   const list = events ? [...events].reverse() : [];
 
   return (
-    <aside className={`ledger ${open ? "" : "is-closed"}`} aria-label="On-chain history">
+    <aside className={`ledger glass ${open ? "" : "is-closed"}`} aria-label="On-chain history">
       <button className="ledger-head" onClick={() => setOpen(!open)} aria-expanded={open}>
         <span>On-chain history</span>
         <span className="ledger-count">{events ? events.length : "…"}</span>

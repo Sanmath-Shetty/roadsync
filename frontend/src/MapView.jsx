@@ -17,13 +17,13 @@ import { toLatLngs } from "./geo";
 const START_VIEW = [12.875, 74.845]; // Mangaluru demo road
 
 // Keep the map clear of the floating history panel on wide screens.
-const fitOptions = () =>
+const fitOptions = (padLeft = 460) =>
   window.innerWidth > 900
-    ? { paddingTopLeft: [60, 60], paddingBottomRight: [400, 60], maxZoom: 19 }
+    ? { paddingTopLeft: [padLeft, 60], paddingBottomRight: [padLeft > 500 ? 240 : 400, 60], maxZoom: 19 }
     : { padding: [30, 30], maxZoom: 19 };
 
 // Zoom to the assets once they load, then follow whatever the user is working on.
-function Camera({ assets, focus }) {
+function Camera({ assets, focus, padLeft }) {
   const map = useMap();
   useEffect(() => {
     if (!assets?.features?.length) return;
@@ -31,7 +31,7 @@ function Camera({ assets, focus }) {
     // Let the layout settle first, otherwise Leaflet measures a 0-size map and zooms way out.
     const t = setTimeout(() => {
       map.invalidateSize();
-      map.fitBounds(bounds, fitOptions());
+      map.fitBounds(bounds, fitOptions(padLeft));
     }, 100);
     return () => clearTimeout(t);
   }, [assets, map]);
@@ -40,8 +40,8 @@ function Camera({ assets, focus }) {
     if (!focus?.length) return;
     const points = focus.flatMap((g) => toLatLngs(g));
     map.invalidateSize();
-    map.flyToBounds(L.latLngBounds(points).pad(0.12), { ...fitOptions(), duration: 0.8 });
-  }, [focus, map]);
+    map.flyToBounds(L.latLngBounds(points).pad(0.12), { ...fitOptions(padLeft), duration: 0.8 });
+  }, [focus, map, padLeft]);
   return null;
 }
 
@@ -93,13 +93,15 @@ const conflictIcon = (color) =>
   });
 
 // One asset = a soft wide glow + a crisp paint stroke.
-function AssetLine({ feature }) {
+function AssetLine({ feature, dim, spotlight }) {
   const color = PAINT[feature.properties.type] || "#999";
   const positions = toLatLngs(feature.geometry);
+  const glow = spotlight ? 0.45 : dim ? 0.04 : 0.18;
+  const line = dim ? 0.2 : 0.95;
   return (
     <>
-      <Polyline positions={positions} pathOptions={{ color, weight: 14, opacity: 0.18 }} interactive={false} />
-      <Polyline positions={positions} pathOptions={{ color, weight: 4, opacity: 0.95 }}>
+      <Polyline positions={positions} pathOptions={{ color, weight: spotlight ? 22 : 14, opacity: glow }} interactive={false} />
+      <Polyline positions={positions} pathOptions={{ color, weight: spotlight ? 6 : 4, opacity: line }}>
         <Tooltip sticky className="map-tip">
           <b>{ASSET_LABELS[feature.properties.type]}</b> {feature.properties.id}
         </Tooltip>
@@ -122,6 +124,9 @@ export default function MapView({
   onFinishDraw,
   onCancelDraw,
   focus,
+  hiddenTypes = [],
+  hoverType = null,
+  padLeft = 460,
 }) {
   const others = useMemo(
     () => (workOrders || []).filter((w) => w.id !== myOrderId && w.status !== "rejected"),
@@ -137,7 +142,7 @@ export default function MapView({
           maxNativeZoom={19}
           maxZoom={20}
         />
-        <Camera assets={assets} focus={focus} />
+        <Camera assets={assets} focus={focus} padLeft={padLeft} />
 
         {/* Other organisations' planned work: wide translucent band */}
         {others.map((w) => (
@@ -152,7 +157,16 @@ export default function MapView({
           </Polyline>
         ))}
 
-        {assets?.features.map((f) => <AssetLine key={f.properties.id} feature={f} />)}
+        {assets?.features
+          .filter((f) => !hiddenTypes.includes(f.properties.type))
+          .map((f) => (
+            <AssetLine
+              key={f.properties.id}
+              feature={f}
+              spotlight={hoverType === f.properties.type}
+              dim={hoverType && hoverType !== f.properties.type}
+            />
+          ))}
 
         {/* Original trench after a reroute: faint ghost */}
         {original && (
@@ -195,27 +209,6 @@ export default function MapView({
           onCancel={onCancelDraw}
         />
       </MapContainer>
-
-      <div className="legend" aria-label="Map legend">
-        {Object.entries(ASSET_LABELS).map(([type, label]) => (
-          <div className="legend-row" key={type}>
-            <span className="swatch" style={{ background: PAINT[type] }} />
-            {label}
-          </div>
-        ))}
-        <div className="legend-row">
-          <span className="swatch swatch-dashed" style={{ color: PAINT.proposed }} />
-          Your trench
-        </div>
-        <div className="legend-row">
-          <span className="swatch swatch-dashed" style={{ color: PAINT.survey }} />
-          Suggested route
-        </div>
-        <div className="legend-row">
-          <span className="swatch swatch-band" />
-          Other orgs' work
-        </div>
-      </div>
 
       {drawing && (
         <div className="draw-hint" role="status">

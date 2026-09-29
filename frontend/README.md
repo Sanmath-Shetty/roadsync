@@ -12,6 +12,7 @@ The backend must be running (`cd backend && python app.py`).
 To point at another backend, copy `.env.example` to `.env` and change `VITE_API_URL`.
 
 ## Demo script
+0. The landing page shows the live map and a real conflict on the demo road. Hover the legend to spotlight a layer, click to hide it.
 1. **Use demo trench** (or **Draw on map**: click points, double-click to finish).
 2. **Check route**: gas crossing, pink safer route, MCC coordination.
 3. **Submit to MST**: permit and conflict are written on-chain.
@@ -23,7 +24,10 @@ Map colours follow the APWA locate-paint code used on real roads:
 yellow gas, red electric, blue water, orange telecom, white proposed dig, pink survey.
 
 ## Files
-- `src/App.jsx`: the 5-step permit flow and all state
+- `src/App.jsx`: landing/desk views, the 5-step permit flow and all state
+- `src/Landing.jsx`: the hero card with live stats
+- `src/Legend.jsx`: interactive map layers
+- `src/useSpecular.js`: the light that follows the pointer on glass panels
 - `src/MapView.jsx`: map, assets, draw tool, conflict markers
 - `src/Ledger.jsx`: on-chain history panel
 - `src/api.js`: every backend call

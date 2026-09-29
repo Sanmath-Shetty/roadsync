@@ -5,6 +5,9 @@ import MapView from "./MapView";
 import Ledger from "./Ledger";
 import Step from "./Step";
 import Toasts from "./Toasts";
+import Landing from "./Landing";
+import Legend from "./Legend";
+import useSpecular from "./useSpecular";
 import { api } from "./api";
 import { DEMO_TRENCH, lengthMeters, toLineString } from "./geo";
 import { ASSET_LABELS, PAINT } from "./colors";
@@ -32,6 +35,15 @@ export default function App() {
   const [timeline, setTimeline] = useState(null);
   const [freshCount, setFreshCount] = useState(0);
   const [offline, setOffline] = useState(false);
+
+  // Which screen: the landing hero or the permit desk
+  const [view, setView] = useState("landing");
+  const [preview, setPreview] = useState(null); // real /check of the demo trench, for the hero
+  const [hiddenTypes, setHiddenTypes] = useState([]);
+  const [hoverType, setHoverType] = useState(null);
+  const toggleType = (t) =>
+    setHiddenTypes((h) => (h.includes(t) ? h.filter((x) => x !== t) : [...h, t]));
+  const panelRef = useSpecular();
 
   // The permit being worked on
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -73,6 +85,7 @@ export default function App() {
   useEffect(() => {
     Promise.all([api.assets().then(setAssets), refreshWorkOrders(), refreshTimeline()])
       .then(() => api.info().then(setChain))
+      .then(() => api.check({ ...DEFAULT_FORM, geometry: DEMO_TRENCH }).then(setPreview))
       .catch((e) => {
         setOffline(true);
         toast(e.message, "error");
@@ -215,19 +228,43 @@ export default function App() {
 
   // What the map camera should frame: the trench plus any reroute.
   const focus = useMemo(() => {
+    if (view === "landing") return preview ? [DEMO_TRENCH, preview.suggested_route?.geometry].filter(Boolean) : null;
     if (!trench || drawing) return null;
     return [trench, result?.suggested_route?.geometry, original].filter(Boolean);
-  }, [trench, drawing, result, original]);
+  }, [view, preview, trench, drawing, result, original]);
+
+  const onLanding = view === "landing";
 
   const length = lengthMeters(trench);
   const draftLength = lengthMeters(draftPoints.length > 1 ? toLineString(draftPoints) : null);
 
   return (
-    <div className="app">
-      <aside className="panel">
+    <div className={`app view-${view}`}>
+      {onLanding && (
+        <Landing
+          assets={assets}
+          workOrders={workOrders}
+          timeline={timeline}
+          chain={chain}
+          preview={preview}
+          onDemo={() => {
+            setView("desk");
+            loadDemoTrench();
+          }}
+          onDraw={() => {
+            setView("desk");
+            startDrawing();
+          }}
+        />
+      )}
+
+      {!onLanding && (
+      <aside ref={panelRef} className="panel glass glass-liquid">
+        <div className="panel-inner">
         <header className="brand">
-          <h1 className="logo">RoadSync</h1>
-          <p className="tagline">Check before you dig. Every decision sealed on MST.</p>
+          <button className="logo logo-btn" onClick={() => setView("landing")} title="Back to overview">
+            RoadSync
+          </button>
           <ChainChip chain={chain} offline={offline} />
         </header>
 
@@ -408,17 +445,22 @@ export default function App() {
             </button>
           )}
         </div>
+        </div>
       </aside>
+      )}
 
       <main className="stage">
         <MapView
           assets={assets}
           workOrders={workOrders}
           myOrderId={order?.id}
-          trench={drawing ? null : trench}
-          original={original}
-          suggested={result?.suggested_route}
-          conflicts={conflicts}
+          trench={onLanding ? DEMO_TRENCH : drawing ? null : trench}
+          original={onLanding ? null : original}
+          suggested={onLanding ? preview?.suggested_route : result?.suggested_route}
+          conflicts={onLanding ? preview?.conflicts : conflicts}
+          hiddenTypes={hiddenTypes}
+          hoverType={hoverType}
+          padLeft={onLanding ? 620 : 460}
           drawing={drawing}
           draftPoints={draftPoints}
           setDraftPoints={setDraftPoints}
@@ -426,7 +468,8 @@ export default function App() {
           onCancelDraw={cancelDrawing}
           focus={focus}
         />
-        <Ledger events={timeline} freshCount={freshCount} />
+        <Legend hidden={hiddenTypes} toggle={toggleType} setHover={setHoverType} />
+        {!onLanding && <Ledger events={timeline} freshCount={freshCount} />}
       </main>
 
       <Toasts toasts={toasts} dismiss={(id) => setToasts((t) => t.filter((x) => x.id !== id))} />
