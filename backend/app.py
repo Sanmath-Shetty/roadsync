@@ -14,7 +14,18 @@ from db import get_conn, init_db
 from engine import check_conflicts, find_coordination, suggest_route
 
 app = Flask(__name__)
-CORS(app)  # lets the React dev server (another port) call this API
+CORS(app)  # lets the frontend (another domain/port) call this API
+
+# Runs on startup, also under gunicorn: create tables, and load the demo
+# data if the database is empty (hosting disks are often wiped on restart).
+init_db()
+with get_conn() as _conn:
+    if _conn.execute("SELECT COUNT(*) FROM assets").fetchone()[0] == 0:
+        import seed
+        seed.seed()
+
+# /demo/tamper is for the live demo only. Set DEMO_MODE=false to switch it off.
+DEMO_MODE = os.getenv("DEMO_MODE", "true").lower() == "true"
 
 
 @app.errorhandler(Exception)
@@ -308,6 +319,8 @@ def verify(order_id):
 def demo_tamper():
     """DEMO ONLY: secretly edit a work order's end date in the DB (not on-chain).
     Then call /verify/<id> to show the chain catches it."""
+    if not DEMO_MODE:
+        return jsonify({"error": "demo mode is off"}), 403
     body = request.get_json(silent=True) or {}
     order = get_order(body.get("work_order_id"))
     if not order:
@@ -338,5 +351,5 @@ def index():
 
 
 if __name__ == "__main__":
-    init_db()  # safe: creates tables / adds columns if missing
-    app.run(debug=True, port=5000)
+    # Local development only. In production gunicorn runs `app:app`.
+    app.run(debug=True, port=int(os.getenv("PORT", 5000)))

@@ -53,11 +53,13 @@ def hash_payload(payload):
     canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return Web3.keccak(text=canonical)
 
+
 def _reason(e):
     """Pull 'Conflict unresolved' out of web3's longer error text."""
     msg = str(e.args[0] if e.args else e)
     m = re.search(r"revert(?:ed)?:?\s*(.+)", msg)
     reason = m.group(1) if m else msg
+    # MST appends the raw revert bytes (": 0x08c379a0..."); drop them.
     return reason.split(": 0x")[0].split(",")[0].strip(" '\"")
 
 
