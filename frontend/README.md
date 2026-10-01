@@ -23,7 +23,7 @@ To point at another backend, copy `.env.example` to `.env` and change `VITE_API_
 Map colours follow the APWA locate-paint code used on real roads:
 yellow gas, red electric, blue water, orange telecom, white proposed dig, pink survey.
 
-## Files
+## All Files 
 - `src/App.jsx`: landing/desk views, the 5-step permit flow and all state
 - `src/Landing.jsx`: the hero card with live stats
 - `src/Legend.jsx`: interactive map layers
